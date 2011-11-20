@@ -1,5 +1,18 @@
 <?php
+// $Id$
+/**
+ * @file
+ *
+ * Everything needed to allow translation of nearly any visible site information 
+ * by using simple in-line markup
+ * 
+ * Known limitations:
+ *  - To prevent unwanted effects the token parser is auto-disabled on all /admin pages
+ */
 
+/**
+ * Implement HOOK_help()
+ */
 function simple_i18n_help($path, $arg) {
   switch ($path) {
     case 'admin/help#simple_i18n':
@@ -15,6 +28,9 @@ function simple_i18n_help($path, $arg) {
   }
 }
 
+/**
+ * Implement HOOK_page_alter()
+ */
 function simple_i18n_page_alter(&$page) {
   $page['#post_render'][] = '_simple_i18n_parse';
 }
@@ -23,19 +39,25 @@ function simple_i18n_page_alter(&$page) {
 //    $theme_registry['page']['#post_render'][] = '_simple_i18n_parse';
 //}
 
+/**
+ * Replace localized patterns with the respective values for current language
+ *
+ * @param string $content
+ * @return string 
+ */
 function _simple_i18n_parse($content) {
-    if (arg(0) == 'admin') {
-        return $content; // do not parse admin pages
-    }
-    
-    global $language;
-    $languages = array_keys(language_list());
-    
-    $pattern = implode(';', array_fill(0, count($languages), "\s*([^;]+?)\s*"));
-    $pattern = "/\[\[@$pattern]]/";
-    
-    $index = array_search($language->language, $languages) + 1;
-    $replace = "\\$index";
-    
-    return preg_replace($pattern, $replace, $content);
+  if (arg(0) == 'admin') {
+    return $content; // do not parse admin pages
+  }
+
+  global $language;
+  $languages = array_keys(language_list());
+
+  $pattern = implode(';', array_fill(0, count($languages), "\s*([^;]+?)\s*"));
+  $pattern = "/\[\[@$pattern]]/";
+
+  $index = array_search($language->language, $languages) + 1;
+  $replace = "\\$index";
+
+  return preg_replace($pattern, $replace, $content);
 }
