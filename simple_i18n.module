@@ -1,0 +1,41 @@
+<?php
+
+function simple_i18n_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#simple_i18n':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t("The <em>[[@ ... ]]</em> Simple I18n module implements a trivial patter matching markup to enclose your localizable strings. Anything that is sent to the user using a theme page template (and is not published in the <em>/admin</em> section) gets parsed by this module, so when the markup is found it is automatically filtered and otputted in the current language.") . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Localizing menu links, terms, views, field labels, ...') . '</dt>';
+      $output .= '<dd>' . t("Use the simple in-line markup: <pre>[[<!-- -->@ Primary language string; Other language; Third one; ... ]]</pre> Translated string should be listed the <strong>same order</strong> as site languages are in <a href='@languages'>Regional and language</a> configuration page.<br />", array('@languages' => url('admin/config/regional/language'))) . '</dd>';
+      $output .= '</dl>';
+      $output .= '<p><em>' . t('This modules does not yet not provide any configurable settings.') . '</em></p>';
+      return $output;
+  }
+}
+
+function simple_i18n_page_alter(&$page) {
+  $page['#post_render'][] = '_simple_i18n_parse';
+}
+
+//function simple_i18n_theme_registry_alter($theme_registry) {
+//    $theme_registry['page']['#post_render'][] = '_simple_i18n_parse';
+//}
+
+function _simple_i18n_parse($content) {
+    if (arg(0) == 'admin') {
+        return $content; // do not parse admin pages
+    }
+    
+    global $language;
+    $languages = array_keys(language_list());
+    
+    $pattern = implode(';', array_fill(0, count($languages), "\s*([^;]+?)\s*"));
+    $pattern = "/\[\[@$pattern]]/";
+    
+    $index = array_search($language->language, $languages) + 1;
+    $replace = "\\$index";
+    
+    return preg_replace($pattern, $replace, $content);
+}
