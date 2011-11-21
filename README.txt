@@ -5,8 +5,8 @@ template (and is not published in the /admin section) gets parsed by this
 module, so when the markup is found it is automatically filtered and outputted
 in the current language.
 
-Why was it created?
-===================
+Why was it created
+==================
 
 The main difference form the existing I18n suite (that I tried to use and did
 not work out as expected for menus, taxonomy and views):
