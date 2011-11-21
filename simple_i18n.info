@@ -1,4 +1,3 @@
-; $Id$
 name = [[@ ... ]] Simple i18n
 description = Allow to translate nearly any visible site information by using simple in-line markup
 dependencies[] = locale
