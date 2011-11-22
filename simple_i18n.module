@@ -47,11 +47,19 @@ function _simple_i18n_parse($content) {
   global $language;
   $languages = array_keys(language_list());
 
-  $pattern = implode(';', array_fill(0, count($languages), "\s*([^;]+?)\s*"));
-  $pattern = "/\[\[@$pattern]]/";
-
   $index = array_search($language->language, $languages) + 1;
   $replace = "\\$index";
+  $parts = array_fill(0, count($languages), "\s*([^;]+?)\s*");
+
+  // for longer texts, that may contain ";"
+  $pattern = implode(';;', $parts);
+  $pattern = "/\[\[@$pattern]]/";
+
+  $content = preg_replace($pattern, $replace, $content);
+  
+  // for short texts
+  $pattern = implode(';', $parts);
+  $pattern = "/\[\[@$pattern]]/";
 
   return preg_replace($pattern, $replace, $content);
 }
