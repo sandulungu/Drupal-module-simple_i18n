@@ -1,13 +1,13 @@
 <?php
-
 /**
  * @file
  *
  * Everything needed to allow translation of nearly any visible site information
- * by using simple in-line markup
+ * by using simple in-line markup.
  *
  * Known limitations:
- *  - To prevent unwanted effects the token parser is auto-disabled on all /admin pages
+ *  - To prevent unwanted effects, the token parser is auto-disabled on all 
+ *    /admin pages.
  */
 
 /**
@@ -17,13 +17,20 @@ function simple_i18n_help($path, $arg) {
   switch ($path) {
     case 'admin/help#simple_i18n':
       $output = '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t("The <em>[[@ ... ]]</em> Simple I18n module implements a trivial patter matching markup to enclose your localizable strings. Anything that is sent to the user using a theme page template (and is not published in the <em>/admin</em> section) gets parsed by this module, so when the markup is found it is automatically filtered and otputted in the current language.") . '</p>';
+      $output .= '<p>' . t("The Simple I18n module implements a trivial patter matching markup to enclose your localizable strings.") . '</p>';
+      $output .= '<p>' . t("Anything that is sent to the user using a theme page template (and is not published in the <em>/admin</em> section) gets parsed by this module, so when the markup is found it is automatically filtered and otputted in the current language.") . '</p>';
+      $output .= '<p>' . t('The module will parse only properly formatted tags.');
+      $output .= ' <strong>' . t('If the number of ";" separators does not match the number of installed languages the whole tag will be ignored.') . '</strong></p>';
+      $output .= '<p>' . t('This modules does not yet provide any configurable settings.') . '</p>';
       $output .= '<h3>' . t('Uses') . '</h3>';
       $output .= '<dl>';
       $output .= '<dt>' . t('Localizing menu links, terms, views, field labels, ...') . '</dt>';
-      $output .= '<dd>' . t("Use the simple in-line markup: <pre>[[<!-- -->@ Primary language string; Other language; Third one; ... ]]</pre> Translated string should be listed the <strong>same order</strong> as site languages are in <a href='@languages'>Regional and language</a> configuration page.<br />", array('@languages' => url('admin/config/regional/language'))) . '</dd>';
+      $output .= '<dd>' . t("Use the simple in-line markup: <pre>[[<!-- -->@ Primary language string; Other language; Third one; ... ]]</pre> Translated string should be listed in the <strong>same order</strong> as site languages are in <a href='@languages'>Regional and language</a> configuration page.", array('@languages' => url('admin/config/regional/language'))) . '</dd>';
+      $output .= '<dt>' . t('Localizing longer texts') . '</dt>';
+      $output .= '<dd>' . t('If your text contains the ";" symbol, use this: <pre>[[<!-- -->@ Primary language string;; Other language;; Third one;; ... ]]</pre>') . '</dd>';
+      $output .= '<dt>' . t('Localizing texts with markup (usually HTML)') . '</dt>';
+      $output .= '<dd>' . t('To prevent chopped tags and other side effects when using WYSIWYG editors, explicitly define language for each translated fragment, by using "[[@<em>language_code</em>: ... ]]" syntax, example: <pre>[[<!-- -->@fr: Le text en francais ]]</pre>Please note that the parser will remove empty tags around inactive translations for you, but, other than this, <u>will not change any part of the DOM</u>, so you may want to check the output for each language, until you get used to how it works.') . '</dd>';
       $output .= '</dl>';
-      $output .= '<p><em>' . t('This modules does not yet not provide any configurable settings.') . '</em></p>';
       return $output;
   }
 }
@@ -45,21 +52,40 @@ function _simple_i18n_parse($content) {
   }
 
   global $language;
+  $langcode = $language->language;
   $languages = array_keys(language_list());
+  $index = array_search($langcode, $languages) + 1;
 
-  $index = array_search($language->language, $languages) + 1;
-  $replace = "\\$index";
-  $parts = array_fill(0, count($languages), "\s*([^;]+?)\s*");
+  // put less resource-intensive pregs first (if possible)
 
-  // for longer texts, that may contain ";"
-  $pattern = implode(';;', $parts);
-  $pattern = "/\[\[@$pattern]]/";
+  // for single language tags (show selected language translation)
+  $pattern = "/\[\[@$langcode:\s*(.+?)\s*]]/s";
+  $content = preg_replace($pattern, '\\1', $content);
 
-  $content = preg_replace($pattern, $replace, $content);
+  // for single language tags (hide all other translations)
+  $pattern = implode('|', array_diff($languages, array($langcode)));
+  $pattern = "/\[\[@($pattern):\s*.+?\s*]]/s";
+  $content = preg_replace($pattern, '[[@PLACEHOLDER]]', $content);
+
+  // recursively remove empty tags arround the content for non-active languages
+  $pattern = '`<([^\s>]+)[^>]+>\s*(\[\[@PLACEHOLDER]]\s*)+</\\1>`s';
+  do {
+    $oldContent = $content;
+    $content = preg_replace($pattern, '\\2', $content);
+  } while ($oldContent != $content);
+  $content = str_replace('[[@PLACEHOLDER]]', '', $content);
   
   // for short texts
+  $parts = array_fill(0, count($languages), "\s*([^;]+?)\s*");
   $pattern = implode(';', $parts);
-  $pattern = "/\[\[@$pattern]]/";
+  $pattern = "/\[\[@$pattern]]/s";
+  $content = preg_replace($pattern, "\\$index", $content);
 
-  return preg_replace($pattern, $replace, $content);
+  // for longer texts, that may contain ";"
+  $parts = array_fill(0, count($languages), "\s*(.+?)\s*");
+  $pattern = implode(';;', $parts);
+  $pattern = "/\[\[@$pattern]]/s";
+  $content = preg_replace($pattern, "\\$index", $content);
+
+  return $content;
 }
