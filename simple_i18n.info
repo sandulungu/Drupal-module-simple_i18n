@@ -1,5 +1,4 @@
-name = [[@ ... ]] Simple i18n
-description = Allow to translate nearly any visible site information by using simple in-line markup
+name = Simple i18n
+description = Allow to translate nearly any visible site information by using simple [[@ ... ]] in-line markup.
 dependencies[] = locale
 core = 7.x
-package = Multilingual - Internationalization
