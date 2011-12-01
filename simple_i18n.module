@@ -6,12 +6,12 @@
  * by using simple in-line markup.
  *
  * Known limitations:
- *  - To prevent unwanted effects, the token parser is auto-disabled on all 
+ *  - To prevent unwanted effects, the token parser is auto-disabled on all
  *    /admin pages.
  */
 
 /**
- * Implement hook_help().
+ * Implements hook_help().
  */
 function simple_i18n_help($path, $arg) {
   switch ($path) {
@@ -36,7 +36,7 @@ function simple_i18n_help($path, $arg) {
 }
 
 /**
- * Implement hook_page_alter().
+ * Implements hook_page_alter().
  */
 function simple_i18n_page_alter(&$page) {
   $page['#post_render'][] = '_simple_i18n_parse';
@@ -47,7 +47,7 @@ function simple_i18n_page_alter(&$page) {
  */
 function _simple_i18n_parse($content) {
   if (arg(0) == 'admin') {
-    // do not parse admin pages
+    // Do not parse admin pages.
     return $content;
   }
 
@@ -56,32 +56,31 @@ function _simple_i18n_parse($content) {
   $languages = array_keys(language_list());
   $index = array_search($langcode, $languages) + 1;
 
-  // put less resource-intensive pregs first (if possible)
-
-  // for single language tags (show selected language translation)
+  // Put less resource-intensive pregs first (if possible)!
+  // For single language tags (show selected language translation)
   $pattern = "/\[\[@$langcode:\s*(.+?)\s*]]/s";
   $content = preg_replace($pattern, '\\1', $content);
 
-  // for single language tags (hide all other translations)
+  // For single language tags (hide all other translations)
   $pattern = implode('|', array_diff($languages, array($langcode)));
   $pattern = "/\[\[@($pattern):\s*.+?\s*]]/s";
   $content = preg_replace($pattern, '[[@PLACEHOLDER]]', $content);
 
-  // recursively remove empty tags arround the content for non-active languages
+  // Recursively remove empty tags arround the content for non-active languages.
   $pattern = '`<([^\s>]+)[^>]+>\s*(\[\[@PLACEHOLDER]]\s*)+</\\1>`s';
   do {
-    $oldContent = $content;
+    $old_content = $content;
     $content = preg_replace($pattern, '\\2', $content);
-  } while ($oldContent != $content);
+  } while ($old_content != $content);
   $content = str_replace('[[@PLACEHOLDER]]', '', $content);
-  
-  // for short texts
+
+  // For short texts.
   $parts = array_fill(0, count($languages), "\s*([^;]+?)\s*");
   $pattern = implode(';', $parts);
   $pattern = "/\[\[@$pattern]]/s";
   $content = preg_replace($pattern, "\\$index", $content);
 
-  // for longer texts, that may contain ";"
+  // For longer texts, that may contain ";"
   $parts = array_fill(0, count($languages), "\s*(.+?)\s*");
   $pattern = implode(';;', $parts);
   $pattern = "/\[\[@$pattern]]/s";
