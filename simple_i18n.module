@@ -50,6 +50,10 @@ function _simple_i18n_parse($content) {
     // do not parse admin pages
     return $content;
   }
+  if (arg(0) == 'node' && arg(2) == 'edit') {
+    // do not parse node edit pages
+    return $content;
+  }
 
   global $language;
   $langcode = $language->language;
