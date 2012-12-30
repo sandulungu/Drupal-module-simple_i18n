@@ -82,7 +82,7 @@ function _simple_i18n_parse($content) {
   // for short texts
   $parts = array_fill(0, count($languages), "\s*([^;]+?)\s*");
   $pattern = implode(';', $parts);
-  $pattern = "/\(?:\[@|@\[)$pattern]]/s";
+  $pattern = "/\[(?:\[@|@\[)$pattern]]/s";
   $content = preg_replace($pattern, "\\$index", $content);
 
   // for longer texts, that may contain ";"
