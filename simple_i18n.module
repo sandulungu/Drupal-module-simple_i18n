@@ -54,6 +54,10 @@ function _simple_i18n_parse($content) {
     // do not parse node edit pages
     return $content;
   }
+  if (arg(0) == 'taxonomy' && arg(3) == 'edit') {
+    // do not parse term edit pages
+    return $content;
+  }
 
   global $language;
   $langcode = $language->language;
@@ -82,7 +86,7 @@ function _simple_i18n_parse($content) {
   // for short texts
   $parts = array_fill(0, count($languages), "\s*([^;]+?)\s*");
   $pattern = implode(';', $parts);
-  $pattern = "/\[(?:\[@|@\[)$pattern]]/s";
+  $pattern = "/\[\[@$pattern]]/s";
   $content = preg_replace($pattern, "\\$index", $content);
 
   // for longer texts, that may contain ";"
